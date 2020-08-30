@@ -48,24 +48,27 @@ class massage(initialization):
         super().__init__(IP, ports)
 
     def get_massage(self):
-        massage = self.local_socket.recv(64)
+        massage = self.local_socket.recv(512)
         code = int.from_bytes(massage[0:2], "big")
-        print(code)
+
         if code == 2 or code == 3 or code == 4 or code == 5 or code == 7 or code == 16 \
                 or code == 11 or code == 12 or code == 22 \
                 or code == 25 or code == 26 or code == 27 or code == 20 or code == 21:
             massage = list(struct.unpack('>3f', massage[2::]))
-            return code, (*massage)
+            return [code, (*massage)]
         elif code == 8:
             massage = list(struct.unpack('>?6f', massage[2::]))
-            return code, (*massage)
+            return [code, (*massage)]
         elif code == 1 or code == 17 or code == 18 or code == 23 or code == 9 or code == 10 or code == 14 or code == 24:
             return [code]
         elif code == 13 or code == 19:
             massage = list(struct.unpack('>4f',  massage[2::]))
-            return code, (*massage)
+            return [code, (*massage)]
         elif code == 15:
-            pass
+            size = int.from_bytes(massage[2:4], "big")
+            print(f'size = {size}')
+            massage = list(struct.unpack(f'>{size}h', massage[4::]))
+            return [code, (*massage)]
 
     def send_massage(self, code, data, IP, port, res = None):
         if code == 2 or code == 3 or code == 4 or code == 5 or code == 7 \
@@ -90,11 +93,6 @@ class massage(initialization):
         else:
             return 'Unexpected command'
 
-#arg = sys.executable + r' C:\Users\Denis\Desktop\CoursProject\simulation\sensor_module.py'
-#p = subprocess.Popen(arg)
-#arg = sys.executable + r' C:\Users\Denis\Desktop\CoursProject\simulation\Controller.py'
-#p_2 = subprocess.Popen(arg)
-#time.sleep(1.5)
 reset_sim, stop_sim, start_sim = [False for x in range(3)]
 massage_manager = massage(IP['manager'], ports['manager'])
 
@@ -130,7 +128,3 @@ while True:
     if input_data[0] == 1:
         start_sim = True
         massage_manager.send_massage(commands['continue'], 1, IP['sensor module'], ports['sensor module'])
-
-
-
-
